@@ -33,9 +33,11 @@ model Order {
   supplierId  String?
   customer    Customer? @relation(fields: [customerId], references: [id])
   customerId  String?
-  status      String
+  status      String                                                                                                                                                                              
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  storeId String
+  store Store @relation(fields: [storeId], references: [id])
 
   orderItems  OrderItem[]
   invoices    Invoice[]
@@ -60,25 +62,32 @@ model User {
   name      String
   email     String   @unique
   password  String
-  role      Role     @relation(fields: [roleId], references: [id])
-  roleId    String
+  role      String   @default("STAFF")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  storeId String? 
+
+  storeManager     Store?   @relation("ManagerStore") 
+  store     Store?  @relation(fields: [storeId], references: [id], onDelete: SetNull)
 
   @@map("users")
 }
 
-model Role {
-  id        String   @id @default(uuid())
-  roleName  String
-  permission String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Store {
+  id          String   @id @default(uuid()) 
+  name        String
+  manager     User     @relation("ManagerStore", fields: [managerId], references: [id]) 
+  managerId   String    @unique 
+  createdAt   DateTime @default(now()) 
+  updatedAt   DateTime @updatedAt 
 
-  users     User[]
+  employees User[]
+  products Product[]
+  Orders Order[]
 
-  @@map("roles")
+  @@map("stores") 
 }
+
 
 model Invoice {
   id           String   @id @default(uuid())
@@ -96,8 +105,8 @@ model Invoice {
 model Product {
   id             String   @id @default(uuid())
   name           String
-  category       Category @relation(fields: [categoryId], references: [id])
-  categoryId     String
+  category       Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId     String?
   price          Float
   quantityInStock Int
   createdAt      DateTime @default(now())
@@ -105,12 +114,15 @@ model Product {
 
   orderItems     OrderItem[]
 
+  storeId String
+  store Store @relation(fields: [storeId],references: [id])
+
   @@map("products")
 }
 
 model Category {
   id        String   @id @default(uuid())
-  name      String
+  name      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
